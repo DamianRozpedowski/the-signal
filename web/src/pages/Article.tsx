@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { ago, fmtDateTime } from "../lib/format";
 import { ConfigNotice, ErrorState, ExternalLink, Icon, Loading, SaveButton } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 const SIZES = ["sm", "md", "lg", "xl"];
 
@@ -27,7 +28,7 @@ export function ArticlePage() {
     const i = Math.max(0, Math.min(SIZES.length - 1, SIZES.indexOf(size) + d));
     savePrefs({ textSize: SIZES[i] }).catch((e) => toast(e.message, "error"));
   };
-  const aiConfigured = status?.ai?.status === "configured";
+  const aiConfigured = !STATIC && status?.ai?.status === "configured";
 
   return (
     <div className={`page reader ${focus ? "focus-mode" : ""}`}>

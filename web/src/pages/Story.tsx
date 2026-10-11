@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { ago, fmtDateTime, fmtTime, shortSource, until } from "../lib/format";
 import { ConfigNotice, Empty, ErrorState, ExternalLink, Icon, Loading, SaveButton, StoryBadges, StoryCard } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 const KIND_LABEL: Record<string, string> = {
   first_report: "First report",
@@ -41,7 +42,7 @@ export function StoryPage() {
     );
   }
   const d = data;
-  const aiConfigured = status?.ai?.status === "configured";
+  const aiConfigured = !STATIC && status?.ai?.status === "configured";
   const sig = d.timeline.filter((e: any) => e.significant || showAll);
 
   const summarize = async () => {
@@ -93,7 +94,7 @@ export function StoryPage() {
           <div className="actions">
             <SaveButton type="story" id={d.id} list="following" initial={d.following} labels={["Follow story", "Following"]} />
             <SaveButton type="story" id={d.id} initial={d.saved} />
-            <a className="btn sm" href="#ask"><Icon name="ask" size={15} /> Ask about this story</a>
+            {!STATIC && <a className="btn sm" href="#ask"><Icon name="ask" size={15} /> Ask about this story</a>}
           </div>
 
           {d.image && <HeroImage img={d.image} />}
@@ -198,7 +199,7 @@ export function StoryPage() {
             )}
           </section>
 
-          <Ask clusterId={d.id} />
+          {!STATIC && <Ask clusterId={d.id} />}
         </article>
 
         <aside className="rail" aria-label="Story context">
@@ -459,6 +460,12 @@ function Extracted({ ex, articles, aiConfigured }: { ex: any; articles: any[]; a
               </p>
             ))}
           </div>
+        </section>
+      )}
+
+      {ex.storyOmitted && (
+        <section id="full-story" className="story-section">
+          <p className="meta">The online edition shows the summary and key facts. Read the complete reports on the publishers' sites, linked under Coverage.</p>
         </section>
       )}
 

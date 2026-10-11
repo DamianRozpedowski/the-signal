@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp } from "../lib/app";
 import { ago, fmtLongDate } from "../lib/format";
 import { Icon } from "./ui";
+import { STATIC } from "../lib/static";
 
 export const NAV_ITEMS: Record<string, { label: string; to: string; icon: string }> = {
   today: { label: "Today", to: "/", icon: "today" },
@@ -169,7 +170,7 @@ export function Layout({ children }: { children: ReactNode }) {
           )}
         </nav>
         <div className="sidebar-foot">
-          <span>Signed in as {session?.user?.display_name}</span>
+          <span>{STATIC ? "Online edition, updated hourly" : `Signed in as ${session?.user?.display_name}`}</span>
           <Link to="/settings#navigation">Customize navigation</Link>
         </div>
       </aside>
@@ -195,7 +196,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </form>
           <div className="topbar-right">
             <RefreshStatus />
-            <Notifications />
+            {!STATIC && <Notifications />}
             <Link to="/settings" className="icon-btn" aria-label="Account and settings">
               <Icon name="user" />
             </Link>

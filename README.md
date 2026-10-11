@@ -57,6 +57,16 @@ The app is a single Node process (API, scheduler and static web app) with an emb
 
 The outbound network must allow HTTPS to the feed hosts you enable and to `api.anthropic.com` if AI is configured.
 
+## Online edition (GitHub Pages)
+
+A read-only edition can be published to GitHub Pages and refreshed every hour by GitHub Actions ([.github/workflows/pages.yml](.github/workflows/pages.yml)). Each run restores the database from the previous run, fetches the feeds, reads article pages, updates the Quick Reads briefing and exports everything the app needs as JSON. The web app built with `npm run build:static` reads those files instead of the API.
+
+To turn it on: Settings → Pages → Source: **GitHub Actions**. Pages needs a public repository (or a paid plan for a private one), and a published Pages site is visible to anyone with the link.
+
+In the online edition, settings, source and topic choices, saved stories, saved searches and reading history are stored in the reader's browser. Accounts, alerts, adding new sources, AI questions and on-demand refreshes need the full version above. Story pages show the summary, key facts and quotes with links to the original articles; set the repository variable `SIGNAL_FULL_TEXT=1` to also publish the full article text (only do this if you are comfortable republishing it publicly). Other options: `SIGNAL_TIMEZONE` (edition times, default America/New_York) and the `ANTHROPIC_API_KEY` secret.
+
+To build it locally: `npm run build:static && npm run static:export` writes the site to `dist/` (set `STATIC_SKIP_INGEST=1` to export without fetching).
+
 ## How it works
 
 - **Ingestion** (`server/ingest`): per-source schedules with adaptive intervals, conditional requests (ETag / Last-Modified), robots.txt checks, size and time limits, redirect and charset handling, SSRF protection, exponential backoff that honors `Retry-After`. Every run is recorded as a job. Failures are visible to readers (source health) and admins.

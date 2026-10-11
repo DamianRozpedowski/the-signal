@@ -12,7 +12,9 @@
     "dev:api": "tsx watch --env-file-if-exists=.env server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
+    "build:static": "vite build --mode static",
     "start": "NODE_ENV=production node --env-file-if-exists=.env --import tsx server/index.ts",
+    "static:export": "node --import tsx server/static/build.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --import tsx --test --test-reporter=spec test/*.test.ts"
   },
