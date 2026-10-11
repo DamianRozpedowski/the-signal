@@ -1,0 +1,89 @@
+# Publishes the online edition of The Signal to GitHub Pages every hour.
+#
+# Each run restores the database from the previous run (Actions cache), fetches the feeds,
+# builds the read-only web app and its JSON data, and deploys it. Pull requests build the
+# edition the same way (so a change is checked against real feeds) but do not deploy.
+#
+# Optional settings (repository Settings > Secrets and variables > Actions):
+#   variable SIGNAL_TIMEZONE   time zone for morning/evening editions (default America/New_York)
+#   variable SIGNAL_FULL_TEXT  "1" publishes the full article text on story pages (see README)
+#   secret   ANTHROPIC_API_KEY adds AI summaries
+
+name: Online edition
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Restore the database from the last run
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: signal-db-${{ github.run_id }}
+          restore-keys: signal-db-
+
+      - name: Build the web app
+        run: npm run build:static
+        env:
+          SIGNAL_BASE: /${{ github.event.repository.name }}/
+
+      - name: Fetch the news and export the edition
+        run: npm run static:export
+        env:
+          DATABASE_PATH: data/static.db
+          STATIC_TIMEZONE: ${{ vars.SIGNAL_TIMEZONE }}
+          STATIC_FULL_TEXT: ${{ vars.SIGNAL_FULL_TEXT }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FEED_USER_AGENT: TheSignal/0.1 (+https://github.com/${{ github.repository }})
+
+      - name: Keep the database for the next run
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: signal-db-${{ github.run_id }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

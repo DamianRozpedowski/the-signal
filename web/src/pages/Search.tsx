@@ -4,6 +4,7 @@ import { api, qs } from "../lib/api";
 import { useApp } from "../lib/app";
 import { ago, fmtDate } from "../lib/format";
 import { Empty, ErrorState, ExternalLink, Loading, Toggle } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 function Snippet({ text }: { text: string }) {
   const parts = text.split(/(\[\[.*?\]\])/g);
@@ -181,7 +182,7 @@ export function SearchPage() {
               {saved.map((s) => (
                 <li key={s.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <Link to={`/search${qs(s.query)}`} style={{ flex: 1 }}>{s.name}</Link>
-                  <Toggle
+                  {!STATIC && <Toggle
                     label={`Alerts for ${s.name}`}
                     checked={Boolean(s.alert)}
                     onChange={async (v) => {
@@ -189,7 +190,7 @@ export function SearchPage() {
                       toast(v ? "You'll be alerted about new matches" : "Alerts off");
                       loadSaved();
                     }}
-                  />
+                  />}
                   <button className="btn sm ghost" aria-label={`Delete ${s.name}`} onClick={async () => { await api.del(`/api/saved-searches/${s.id}`); loadSaved(); }}>×</button>
                 </li>
               ))}

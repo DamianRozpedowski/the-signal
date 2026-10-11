@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { ago, fmtDate, fmtDateTime, fmtTime, shortSource, until } from "../lib/format";
 import { ConfigNotice, Empty, ErrorState, ExternalLink, Loading, SaveButton } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 type Mode = 2 | 5 | 10;
 const MODE_KEY: Record<Mode, "two" | "five" | "ten"> = { 2: "two", 5: "five", 10: "ten" };
@@ -79,7 +80,7 @@ export function QuickReads() {
             ))}
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            {isCurrent && (
+            {isCurrent && !STATIC && (
               <button className="btn sm" onClick={refresh} disabled={busy}>
                 {busy ? "Updating…" : "Update briefing"}
               </button>
@@ -421,7 +422,7 @@ function Watch({ items, onAdded }: { items: any[]; onAdded: () => void }) {
     <section className="panel" style={{ marginTop: 20 }} aria-labelledby="watch">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
         <h2 id="watch" style={{ margin: 0 }}>What to watch</h2>
-        <button className="btn sm" onClick={() => setAdding(!adding)} aria-expanded={adding}>{adding ? "Cancel" : "Add an event"}</button>
+        {!STATIC && <button className="btn sm" onClick={() => setAdding(!adding)} aria-expanded={adding}>{adding ? "Cancel" : "Add an event"}</button>}
       </div>
       {adding && (
         <form

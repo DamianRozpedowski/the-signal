@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { fmtDate, fmtDateTime } from "../lib/format";
 import { Empty, ErrorState, ExternalLink, Loading, StoryCard } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 function StateButtons({ t, onChange }: { t: any; onChange: () => void }) {
   const { toast } = useApp();
@@ -115,7 +116,7 @@ export function Topics() {
           ))}
         </div>
         <span className="grow" />
-        <button className="btn" onClick={() => setCreating(!creating)}>{creating ? "Close" : "Create a topic"}</button>
+        {!STATIC && <button className="btn" onClick={() => setCreating(!creating)}>{creating ? "Close" : "Create a topic"}</button>}
       </div>
       {creating && <TopicForm onDone={(id) => { setCreating(false); if (id) nav(`/topics/${id}`); else reload(); }} />}
       {loading && !data && <Loading lines={6} />}

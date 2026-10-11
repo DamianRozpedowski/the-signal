@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { ago, fmtDateTime, hostOf } from "../lib/format";
 import { Empty, ErrorState, ExternalLink, Loading, SourceStatus } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 const KIND_LABEL: Record<string, string> = {
   publisher: "Publisher",
@@ -135,7 +136,7 @@ export function Sources() {
               <option value="volume">Sort: articles in 24h</option>
             </select>
             <span className="grow" />
-            <button className="btn" onClick={() => setAdding(!adding)} aria-expanded={adding}>{adding ? "Close" : "Add a source"}</button>
+            {!STATIC && <button className="btn" onClick={() => setAdding(!adding)} aria-expanded={adding}>{adding ? "Close" : "Add a source"}</button>}
           </div>
           {adding && <AddSource categories={data?.categories ?? []} onAdded={() => { setAdding(false); reload(true); reloadStatus(); }} />}
           <div className="toolbar" style={{ position: "sticky", top: 58, zIndex: 10, background: "var(--paper)", padding: "8px 0", margin: 0 }}>
@@ -268,7 +269,7 @@ function SourceDetail({ s, onRemoved }: { s: any; onRemoved: () => void }) {
       </div>
       {s.lastError && <div className="notice error"><div><strong>Last error</strong>{s.lastError}</div></div>}
       <div style={{ display: "flex", gap: 8 }}>
-        <button
+        {!STATIC && <button
           className="btn sm"
           disabled={s.adminDisabled}
           onClick={async () => {
@@ -281,7 +282,7 @@ function SourceDetail({ s, onRemoved }: { s: any; onRemoved: () => void }) {
           }}
         >
           Check now
-        </button>
+        </button>}
         {s.custom && (
           <button
             className="btn sm danger"

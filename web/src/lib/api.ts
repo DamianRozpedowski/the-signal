@@ -1,4 +1,7 @@
 // Small fetch wrapper: JSON in/out, CSRF header on every request, readable errors.
+// In the static edition (GitHub Pages) the same calls are answered in the browser.
+
+import { STATIC, staticRequest } from "./static";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public body?: any) {
@@ -7,6 +10,13 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  if (STATIC) {
+    try {
+      return (await staticRequest(method, url, body)) as T;
+    } catch (e: any) {
+      throw new ApiError(e?.status ?? 500, e?.message ?? "Something went wrong");
+    }
+  }
   const res = await fetch(url, {
     method,
     credentials: "same-origin",

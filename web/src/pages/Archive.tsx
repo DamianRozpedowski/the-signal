@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { useApp, useLoad } from "../lib/app";
 import { ago, fmtDate, fmtDateTime } from "../lib/format";
 import { ConfigNotice, Empty, ErrorState, Loading, StoryCard } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 function todayStr() {
   const d = new Date();
@@ -126,7 +127,7 @@ function Editions() {
                   : "1"}
               </td>
               <td>
-                <button
+                {!STATIC && <button
                   className="btn sm ghost"
                   title="Creates a corrected revision using the same stories; the original stays available."
                   onClick={async () => {
@@ -139,7 +140,7 @@ function Editions() {
                   }}
                 >
                   Regenerate
-                </button>
+                </button>}
               </td>
             </tr>
           ))}
@@ -166,7 +167,7 @@ function Weekly() {
         <h2 className="hl hl-m" style={{ margin: 0 }}>Week {data.week.split("-W")[1]}, {data.week.split("-W")[0]}</h2>
         <span className="grow" />
         <span className="meta">Compiled {ago(data.generatedAt)}</span>
-        <button className="btn sm" onClick={() => setRefreshKey(refreshKey + 1)}>Recompile</button>
+        {!STATIC && <button className="btn sm" onClick={() => setRefreshKey(refreshKey + 1)}>Recompile</button>}
       </div>
       {data.aiStatus !== "configured" && (
         <ConfigNotice title="Written recap needs an AI key">The themes and narrative are written by an AI model, which is not configured. The week's top stories are listed below.</ConfigNotice>

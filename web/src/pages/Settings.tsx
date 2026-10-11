@@ -4,6 +4,7 @@ import { NAV_ITEMS } from "../components/Layout";
 import { api } from "../lib/api";
 import { useApp } from "../lib/app";
 import { Icon, Toggle } from "../components/ui";
+import { STATIC } from "../lib/static";
 
 function Row({ label, hint, children, htmlFor }: { label: string; hint?: ReactNode; children: ReactNode; htmlFor?: string }) {
   return (
@@ -48,7 +49,10 @@ export function Settings() {
     <div className="page" style={{ maxWidth: 860 }}>
       <h1 className="hl hl-l">Settings</h1>
       <nav className="chips" aria-label="Settings sections" style={{ marginBottom: 18 }}>
-        {[["appearance", "Appearance"], ["navigation", "Navigation"], ["personalization", "Personalization"], ["briefing", "Quick Reads"], ["notifications", "Notifications"], ["account", "Account"]].map(([id, l]) => (
+        {(STATIC
+          ? [["appearance", "Appearance"], ["navigation", "Navigation"], ["personalization", "Personalization"], ["briefing", "Quick Reads"], ["account", "Your data"]]
+          : [["appearance", "Appearance"], ["navigation", "Navigation"], ["personalization", "Personalization"], ["briefing", "Quick Reads"], ["notifications", "Notifications"], ["account", "Account"]]
+        ).map(([id, l]) => (
           <a key={id} className="chip" href={`#${id}`}>{l}</a>
         ))}
       </nav>
@@ -90,13 +94,13 @@ export function Settings() {
 
       <section id="personalization" className="panel">
         <h2>Personalization</h2>
-        <Row label="Personalization strength" htmlFor="pers" hint="Low keeps a broad editorial front page; high favors your followed topics, area and preferred sources. Major stories are always included.">
+        {!STATIC && <Row label="Personalization strength" htmlFor="pers" hint="Low keeps a broad editorial front page; high favors your followed topics, area and preferred sources. Major stories are always included.">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span className="meta">Broad</span>
             <input id="pers" type="range" min={0} max={100} step={5} defaultValue={prefs.personalization} onMouseUp={(e) => save({ personalization: Number((e.target as HTMLInputElement).value) })} onKeyUp={(e) => save({ personalization: Number((e.target as HTMLInputElement).value) })} onTouchEnd={(e) => save({ personalization: Number((e.target as HTMLInputElement).value) })} />
             <span className="meta">Personal</span>
           </div>
-        </Row>
+        </Row>}
         <Row label="Local area" hint={prefs.location ? prefs.location.label : "Not set"}>
           <Link className="btn sm" to="/">Change on Today → Edit layout</Link>
         </Row>
@@ -113,6 +117,7 @@ export function Settings() {
             ))}
           </div>
         </Row>
+        {!STATIC && <>
         <Row label="Morning edition starts at" htmlFor="mc" hint="In your time zone.">
           <input id="mc" type="time" defaultValue={prefs.briefing.morningCutoff} onBlur={(e) => e.target.value && save({ briefing: { morningCutoff: e.target.value } })} />
         </Row>
@@ -122,9 +127,10 @@ export function Settings() {
         <Row label="Overnight section covers news since" htmlFor="on" hint="The previous evening, until the morning edition.">
           <input id="on" type="time" defaultValue={prefs.briefing.overnightFrom} onBlur={(e) => e.target.value && save({ briefing: { overnightFrom: e.target.value } })} />
         </Row>
+        </>}
       </section>
 
-      <section id="notifications" className="panel">
+      {!STATIC && <section id="notifications" className="panel">
         <h2>Notifications</h2>
         <Row label="Notifications" hint="Turn all alerts on or off.">
           <Toggle label="Notifications enabled" checked={n.enabled} onChange={(v) => save({ notifications: { enabled: v } })} />
@@ -243,9 +249,9 @@ export function Settings() {
           </button>
           <span className="meta" style={{ marginLeft: 10 }}>Shows exactly which channels delivered it.</span>
         </div>
-      </section>
+      </section>}
 
-      <Account session={session} reloadSession={reloadSession} toast={toast} />
+      {STATIC ? <LocalData reloadSession={reloadSession} toast={toast} /> : <Account session={session} reloadSession={reloadSession} toast={toast} />}
     </div>
   );
 }
@@ -428,6 +434,46 @@ function Account({ session, reloadSession, toast }: any) {
           }}
         >
           Delete account
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/** Online edition: the reader's choices live in this browser; there is no account. */
+function LocalData({ reloadSession, toast }: any) {
+  return (
+    <section id="account" className="panel">
+      <h2>Your data</h2>
+      <p className="meta" style={{ marginTop: 0 }}>
+        This is the online edition of The Signal. Your settings, sources, topics, saved stories and reading history are stored only in this browser. Accounts,
+        alerts, adding new sources and AI questions are part of the full version that runs on your computer.
+      </p>
+      <div className="toolbar">
+        <button
+          className="btn"
+          onClick={async () => {
+            if (!window.confirm("Reset all preferences (layout, navigation) to defaults? Sources, topics and saved items are kept.")) return;
+            await api.post("/api/prefs/reset");
+            await reloadSession();
+            toast("Preferences reset");
+          }}
+        >
+          Reset preferences
+        </button>
+        <button
+          className="btn danger"
+          onClick={() => {
+            if (!window.confirm("Clear everything this site stored in this browser: preferences, sources, topics, saved items and history?")) return;
+            try {
+              localStorage.removeItem("the-signal:reader");
+            } catch {
+              /* nothing stored */
+            }
+            window.location.reload();
+          }}
+        >
+          Clear data in this browser
         </button>
       </div>
     </section>

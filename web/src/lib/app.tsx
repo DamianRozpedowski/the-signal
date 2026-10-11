@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api } from "./api";
 import { setTimeZone } from "./format";
+import { STATIC, watchEdition } from "./static";
 
 // App-wide state: the signed-in user, their preferences, system status (AI, delivery
 // channels, source health), live server events and toasts.
@@ -83,8 +84,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Live updates via Server-Sent Events (only while signed in).
   const userId = session?.user?.id;
+  // Static edition: no server to stream from; check for a newly published edition instead.
   useEffect(() => {
-    if (!userId) return;
+    if (!STATIC || !userId) return;
+    reloadStatus();
+    setLiveConnected(true);
+    return watchEdition(() => {
+      reloadStatus();
+      for (const t of ["refresh", "articles", "cluster", "briefing", "source"]) listeners.current.forEach((fn) => fn(t, null));
+    });
+  }, [userId, reloadStatus]);
+
+  useEffect(() => {
+    if (STATIC || !userId) return;
     reloadStatus();
     const es = new EventSource("/api/events");
     const fan = (type: string) => (ev: MessageEvent) => {
